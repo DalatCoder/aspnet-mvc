@@ -86,3 +86,103 @@ Chọn `solution`, tạo các `project` mới
 ![Image](md_assets/createsoltionfolder.png)
 
 ### 2.3. Web Application | Request pipeline
+
+## 3. Thiết kế chức năng hệ thống
+
+Áp dụng mô hình `agile/scrum`
+
+Các loại thiết kế:
+
+- Thiết kế cấu trúc dữ liệu
+- Thiết kế `architect`
+- Thiết kế giải thuật
+
+Tạo `user stories`
+
+- Customer want to have a good UI design
+- Customer want to have a good SEO website
+- Customer want to show list products
+- Customer want to classify the products (1 product will belong to 1 or multiple categories)
+- Customer want to make multiple-levels for prouct categories
+- Customer want to sell online on website
+- Customer want to easy manage all products
+- Customer want to have members
+- Customer want to control access from `admin`
+- Customer want to intergrate payment online
+- Customer want to intergrate login with Google and Facebook
+- Customer want to show product detail (unique code, name, description, price, warranty,...)
+- Customer want to have promotion? sales?
+- Customer want to have multiple-languages
+- Customer want to have multiple-images for each product
+- Customer want to have contact information
+
+Tạo các `functions` (chức năng) từ `user stories`
+
+- Customer want to have a good UI design
+  - Design UI for all pages
+  - HTML support SEO (title, heading, alt, description,...)
+
+- Customer want to show list products
+  - List products
+  - Product details
+
+- Customer want to sell online on website
+  - Cart
+  - Orders
+
+- Customer want to control access from `admin`
+  - Admin page (manage products, categories)
+
+- Customer want to have members
+  - Login
+  - Register
+  - Manage users
+  - Permission
+
+- Customer want to intergrate payment online
+  - Transaction
+  - Payment intergration
+- Customer want to intergrate login with Google and Facebook
+  - External login intergration
+
+- Customer want to have promotion? sales?
+  - Promotion
+
+- Customer want to have multiple-languages
+  - Multiple languages
+
+Phân rã chức năng thành 2 phân hệ: `admin page` và `customer page`
+
+Các chức năng thuộc phân hệ `admin`
+
+- Login
+- Logout
+- Menu
+- UI for admin
+- Show login information
+- Change password for admin
+- Manage product
+- Manage product categories
+- Manage members
+- Manage orders
+- Manage transactions information
+- Manage permission
+
+Các chức năng thuộc phân hệ `customer` (trang `website`)
+
+- UI HTML
+- List product categories
+- Show product by categories
+- Product details
+- Cart
+- Login
+- Register
+- Show information
+- Change password
+- Forgot password
+- Logout
+- Checkout
+- Payment confirmation
+- Profile/list orders
+- Contact
+- Search
