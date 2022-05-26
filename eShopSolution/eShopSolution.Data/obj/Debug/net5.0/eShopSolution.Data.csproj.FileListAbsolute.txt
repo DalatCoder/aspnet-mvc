@@ -1,0 +1,15 @@
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\bin\Debug\net5.0\eShopSolution.Data.deps.json
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\bin\Debug\net5.0\eShopSolution.Data.runtimeconfig.json
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\bin\Debug\net5.0\eShopSolution.Data.runtimeconfig.dev.json
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\bin\Debug\net5.0\eShopSolution.Data.dll
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\bin\Debug\net5.0\eShopSolution.Data.pdb
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\obj\Debug\net5.0\eShopSolution.Data.csproj.AssemblyReference.cache
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\obj\Debug\net5.0\eShopSolution.Data.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\obj\Debug\net5.0\eShopSolution.Data.AssemblyInfoInputs.cache
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\obj\Debug\net5.0\eShopSolution.Data.AssemblyInfo.cs
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\obj\Debug\net5.0\eShopSolution.Data.csproj.CoreCompileInputs.cache
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\obj\Debug\net5.0\eShopSolution.Data.dll
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\obj\Debug\net5.0\refint\eShopSolution.Data.dll
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\obj\Debug\net5.0\eShopSolution.Data.pdb
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\obj\Debug\net5.0\eShopSolution.Data.genruntimeconfig.cache
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Data\obj\Debug\net5.0\ref\eShopSolution.Data.dll

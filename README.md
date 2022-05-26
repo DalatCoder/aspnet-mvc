@@ -398,3 +398,23 @@ Thiết kế chi tiết
 | Id        |
 | Name      |
 | IsDefault |
+
+### 3.2. Cài đặt Entity Framework
+
+Chọn project `eShopSolution.Data`, chuột phải chọn `Manage Packages with NuGet` và tiến hành cài đặt các thư viện cần thiết
+
+- `dotnet add package Microsoft.EntityFrameworkCore.SqlServer`
+- `dotnet add package Microsoft.EntityFrameworkCore.Design`
+- `dotnet add package Microsoft.EntityFrameworkCore.Tools`
+
+Tạo 2 thư mục:
+
+- `EF`
+- `Entities`
+
+Để cấu hình `entity`
+
+- Dùng `Attribute configuration`: dùng các thuộc tính trên lớp `entity` như `[Table()]` hay `[Required]`
+- Dùng `Fluent API configuration` (thường dùng)
+
+![Image](md_assets/ef.png)
