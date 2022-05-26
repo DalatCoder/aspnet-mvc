@@ -53,7 +53,7 @@ Cấu trúc thư mục `project`
 - `Program.cs`: `entry point` của ứng dụng
 - `Startup.cs`: Chứa các cài đặt, cấu hình, `middleware`,...
 - Trong `properties`, `launchSettings.json` chứa các cấu hình chạy server, được định nghĩa tại khóa `profiles`: bao gồm `IIS Express` và tự `host`. Thường sẽ
-chọn tự host
+  chọn tự host
 
 ![Image](md_assets/launchsettings.png)
 
@@ -119,21 +119,26 @@ Tạo `user stories`
 Tạo các `functions` (chức năng) từ `user stories`
 
 - Customer want to have a good UI design
+
   - Design UI for all pages
   - HTML support SEO (title, heading, alt, description,...)
 
 - Customer want to show list products
+
   - List products
   - Product details
 
 - Customer want to sell online on website
+
   - Cart
   - Orders
 
 - Customer want to control access from `admin`
+
   - Admin page (manage products, categories)
 
 - Customer want to have members
+
   - Login
   - Register
   - Manage users
@@ -143,9 +148,11 @@ Tạo các `functions` (chức năng) từ `user stories`
   - Transaction
   - Payment intergration
 - Customer want to intergrate login with Google and Facebook
+
   - External login intergration
 
 - Customer want to have promotion? sales?
+
   - Promotion
 
 - Customer want to have multiple-languages
@@ -186,3 +193,208 @@ Các chức năng thuộc phân hệ `customer` (trang `website`)
 - Profile/list orders
 - Contact
 - Search
+
+### 3.1. Thiết kế CSDL
+
+Chia các bảng vào các nhóm: `system`, `online shopping` và `utilities`
+
+System
+
+- Users
+- Roles
+- UserRoles
+- Permissions
+- Actions
+- Functions
+- Configurations
+
+Online shopping
+
+- Products
+- Categories
+- ProductCategories
+- Carts
+- Orders
+- OrderDetails
+- Transactions
+- ProductTranslations
+- CategoriesTranslations
+- Promotions
+
+Ultilities
+
+- SystemActivities
+- Contacts
+- Languages
+
+Thiết kế chi tiết
+
+| Users         |
+| ------------- |
+| Id            |
+| UserName      |
+| Password      |
+| PhoneNumber   |
+| Email         |
+| DOB           |
+| FullName      |
+| LastLoginDate |
+
+| Roles       |
+| ----------- |
+| Id          |
+| Name        |
+| Description |
+
+| UserRoles |
+| --------- |
+| UserId    |
+| RoleId    |
+
+| Permissions |
+| ----------- |
+| RoleId      |
+| FunctionId  |
+| ActionId    |
+
+| Actions |
+| ------- |
+| Id      |
+| Name    |
+
+| Functions |
+| --------- |
+| Id        |
+| Name      |
+| Url       |
+| ParentId  |
+| Status    |
+| SortOrder |
+
+| Configurations |
+| -------------- |
+| Key            |
+| Value          |
+
+| Products       |
+| -------------- |
+| Id             |
+| Name           |
+| Descriptions   |
+| Price          |
+| OriginalPrice  |
+| Details        |
+| Stock          |
+| SeoDescription |
+| SeoTitle       |
+| SeoAlias       |
+| ViewCount      |
+| DateCreated    |
+
+| Categories     |
+| -------------- |
+| Id             |
+| Name           |
+| SortOrder      |
+| IsShowOnHome   |
+| ParentId       |
+| Status         |
+| SeoDescription |
+| SeoTitle       |
+| SeoAlias       |
+
+| Carts     |
+| --------- |
+| Id        |
+| ProductId |
+| Quantity  |
+| Price     |
+
+| Orders          |
+| --------------- |
+| Id              |
+| OrderDate       |
+| UserId          |
+| ShipName        |
+| ShipAddress     |
+| ShipEmail       |
+| ShipPhoneNumber |
+| Status          |
+
+| OrderDetails |
+| ------------ |
+| OrderId      |
+| ProductId    |
+| Quantity     |
+| Price        |
+
+| Transactions          |
+| --------------------- |
+| Id                    |
+| TransactionDate       |
+| ExternalTransactionId |
+| Amount                |
+| Fee                   |
+| Result                |
+| Message               |
+| Status                |
+| Providers             |
+
+| ProductTranslations |
+| ------------------- |
+| Id                  |
+| ProductId           |
+| Name                |
+| Description         |
+| Details             |
+| SeoDescription      |
+| SeoTitle            |
+| SeoAlias            |
+| LanguageId          |
+
+| CategoriesTranslations |
+| ---------------------- |
+| Id                     |
+| CategoryId             |
+| Name                   |
+| SeoDescription         |
+| SeoTitle               |
+| SeoAlias               |
+| LanguageId             |
+
+| Promotions        |
+| ----------------- |
+| Id                |
+| FromDate          |
+| ToDate            |
+| ApplyForAll       |
+| DiscountPercent   |
+| DiscountAmount    |
+| ProductIds        |
+| ProductCategories |
+| Status            |
+| Name              |
+
+| SystemActivities |
+| ---------------- |
+| Id               |
+| ActionName       |
+| ActionDate       |
+| FunctionId       |
+| UserId           |
+| ClientIP         |
+
+| Contact     |
+| ----------- |
+| Id          |
+| Name        |
+| Email       |
+| PhoneNumber |
+| Message     |
+| Status      |
+
+| Languages |
+| --------- |
+| Id        |
+| Name      |
+| IsDefault |
