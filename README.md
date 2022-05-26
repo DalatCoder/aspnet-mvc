@@ -56,3 +56,21 @@ Cấu trúc thư mục `project`
 chọn tự host
 
 ![Image](md_assets/launchsettings.png)
+
+### 2.1. Git flow
+
+- Tạo nhánh mới cho `git`
+- `master` --> `develop`
+- Phát triển tính năng mới: `features/solution_folder` --> create `pull` request to `develop`
+- Fix bug: `bugfix/fix_error_start` --> create `pull` request to `develop` 
+
+### 2.2. Tạo cấu trúc `solution`
+
+Thường viết theo 2 dạng:
+
+- `N layer`: chia 3 tầng `Data`, `Business`, `Presentation`, thiết kế theo hướng dữ liệu `Data Driven Design`
+- `DDD`: `Domain driven design`, thiết kế theo hướng nghiệp vụ
+
+Trong trường hợp dự án này ta sẽ dùng mô hình `N layer`
+
+### 2.3. Web Application | Request pipeline
