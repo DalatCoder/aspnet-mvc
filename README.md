@@ -52,7 +52,7 @@ Cấu trúc thư mục `project`
 - `wwwroot`: chứa các thành phần tĩnh: `css`, `js` hay `image`
 - `Program.cs`: `entry point` của ứng dụng
 - `Startup.cs`: Chứa các cài đặt, cấu hình, `middleware`,...
-- Trong `properties`, `launchSettings.json` chứa các cấu hình chạy server, được định nghĩa tại khóa `profiles`: bao gồm `IIS Express` và tự `host`. Thường sẽ 
+- Trong `properties`, `launchSettings.json` chứa các cấu hình chạy server, được định nghĩa tại khóa `profiles`: bao gồm `IIS Express` và tự `host`. Thường sẽ
 chọn tự host
 
 ![Image](md_assets/launchsettings.png)
@@ -61,8 +61,13 @@ chọn tự host
 
 - Tạo nhánh mới cho `git`
 - `master` --> `develop`
-- Phát triển tính năng mới: `features/solution_folder` --> create `pull` request to `develop`
-- Fix bug: `bugfix/fix_error_start` --> create `pull` request to `develop` 
+- Phát triển tính năng mới: `feature/create_solution_folder` --> create `pull` request to `develop`
+- Fix bug: `bugfix/fix_error_start` --> create `pull` request to `develop`
+
+Tạo nhánh mới `feature/create_solution_folder` để bắt đầu xây dựng các thư mục
+tương ứng với cấu trúc `N layer`
+
+![Image](md_assets/gitflow.png)
 
 ### 2.2. Tạo cấu trúc `solution`
 
@@ -72,5 +77,12 @@ Thường viết theo 2 dạng:
 - `DDD`: `Domain driven design`, thiết kế theo hướng nghiệp vụ
 
 Trong trường hợp dự án này ta sẽ dùng mô hình `N layer`
+
+Chọn `solution`, tạo các `project` mới
+
+- Tạo `Class Library (.NET Core)`, đặt tên `eShopSolution.Data` (Data)
+- Tạo `Class Library (.NET Core)`, đặt tên `eShopSolution.Application` (Business)
+
+![Image](md_assets/createsoltionfolder.png)
 
 ### 2.3. Web Application | Request pipeline
