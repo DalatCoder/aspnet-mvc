@@ -593,3 +593,97 @@ Sau đó, chọn phải chọn `project` `eShopSolution.Data` chọn `Setup as s
 - Chạy lệnh `update-database` để tạo CSDL từ các tập tin `migrations`
 
 ![Image](md_assets/db.png)
+
+### 3.6. Database seeding
+
+Tạo 1 lượng dữ liệu mẫu sau khi `migration`
+
+Có thể viết các dữ liệu mẫu trực tiếp vào phương thức `OnModelCreating`, tuy nhiên như vậy khá là dài
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // Configure using Fluent API
+    modelBuilder.ApplyConfiguration(new CartConfiguration());
+
+    modelBuilder.ApplyConfiguration(new AppConfigConfiguration());
+    modelBuilder.ApplyConfiguration(new ProductConfiguration());
+    modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+    modelBuilder.ApplyConfiguration(new ProductInCategoryConfiguration());
+    modelBuilder.ApplyConfiguration(new OrderConfiguration());
+
+    modelBuilder.ApplyConfiguration(new OrderDetailConfiguration());
+    modelBuilder.ApplyConfiguration(new CategoryTranslationConfiguration());
+    modelBuilder.ApplyConfiguration(new ContactConfiguration());
+    modelBuilder.ApplyConfiguration(new LanguageConfiguration());
+    modelBuilder.ApplyConfiguration(new ProductTranslationConfiguration());
+    modelBuilder.ApplyConfiguration(new PromotionConfiguration());
+    modelBuilder.ApplyConfiguration(new TransactionConfiguration());
+
+    // Database seeding
+    modelBuilder.Entity<AppConfig>().HasData(
+        new AppConfig() { Key = "HomeTitle", Value = "This is home page of eShopSolution"},
+        new AppConfig() { Key = "HomeKeyword", Value = "This is keyword of eShopSolution"},
+        new AppConfig() { Key = "HomeDescription", Value = "This is description of eShopSolution"}
+    );
+
+    // base.OnModelCreating(modelBuilder);
+}
+```
+
+Có một cách khác, sử dụng `Extension Method`
+
+- Tạo `folder` `Extensions` trong dự án `eShopSolution.Data`
+- Tạo `class` `ModelBuilderExtensions` trong thư mục này
+- Tạo phương thức mở rộng và thêm các dòng dữ liệu mẫu
+
+```csharp
+namespace eShopSolution.Data.Extensions
+{
+    public static class ModelBuilderExtensions
+    {
+        public static void Seed(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<AppConfig>().HasData(
+                new AppConfig() { Key = "HomeTitle", Value = "This is home page of eShopSolution"},
+                new AppConfig() { Key = "HomeKeyword", Value = "This is keyword of eShopSolution"},
+                new AppConfig() { Key = "HomeDescription", Value = "This is description of eShopSolution"}
+            );
+        }
+    }
+}
+```
+
+Sau khi khai báo phương thức mở rộng, ta có thể gọi phương thức này như dưới đây
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // Configure using Fluent API
+    modelBuilder.ApplyConfiguration(new CartConfiguration());
+
+    modelBuilder.ApplyConfiguration(new AppConfigConfiguration());
+    modelBuilder.ApplyConfiguration(new ProductConfiguration());
+    modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+    modelBuilder.ApplyConfiguration(new ProductInCategoryConfiguration());
+    modelBuilder.ApplyConfiguration(new OrderConfiguration());
+
+    modelBuilder.ApplyConfiguration(new OrderDetailConfiguration());
+    modelBuilder.ApplyConfiguration(new CategoryTranslationConfiguration());
+    modelBuilder.ApplyConfiguration(new ContactConfiguration());
+    modelBuilder.ApplyConfiguration(new LanguageConfiguration());
+    modelBuilder.ApplyConfiguration(new ProductTranslationConfiguration());
+    modelBuilder.ApplyConfiguration(new PromotionConfiguration());
+    modelBuilder.ApplyConfiguration(new TransactionConfiguration());
+
+    // Database seeding
+    modelBuilder.Seed();
+
+    // base.OnModelCreating(modelBuilder);
+}
+```
+
+- Tiến hành tạo `migration` mới: `Add-Migration SeedData`
+- Cập nhật `dabase` thông qua `Update-Database`
+
+![Image](md_assets/seeddata.png)
