@@ -517,3 +517,79 @@ namespace eShopSolution.Data.EF
 ```
 
 ![Image](md_assets/configuration.png)
+
+### 3.5. Database migration
+
+Cấu hình để tạo migration
+
+Cần phải tạo 1 file `appsettings.json` trong dự án `eShopSolution.Data` để lưu trữ các thông tin cấu hình, bao gồm: `ConnectionString`
+
+```json
+{
+  "ConnectionStrings": {
+    "eShopSolutionDb": "Server=.;Database=eShopSolution;Trusted_Connection=True;"
+  }
+}
+```
+
+Tạo `DbContextFactory`
+
+- Tạo `class` `EShopDbContextFactory` bên trong thư mục `EF`
+
+```csharp
+namespace eShopSolution.Data.EF
+{
+    public class EShopDbContextFactory : IDesignTimeDbContextFactory<EShopDbContext>
+    {
+        public EShopDbContext CreateDbContext(string[] args)
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<EShopDbContext>();
+            optionsBuilder.UseSqlServer("");
+
+            return new EShopDbContext(optionsBuilder.Options);
+        }
+    }
+}
+```
+
+Để lấy được `ConnectionStrings` từ tập tin `appsettings.json`, ta cần cài thư viện thông qua `NuGet`
+
+- `FileExtensions`: để gọi phương thức `SetBasePath`
+- `Microsoft.Extensions.Configuration.Json`: để gọi phương thức `AddJsonFile`
+
+```csharp
+namespace eShopSolution.Data.EF
+{
+    public class EShopDbContextFactory : IDesignTimeDbContextFactory<EShopDbContext>
+    {
+        public EShopDbContext CreateDbContext(string[] args)
+        {
+            IConfigurationRoot configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .Build();
+
+            var connectionString = configuration.GetConnectionString("eShopSolutionDb");
+
+            var optionsBuilder = new DbContextOptionsBuilder<EShopDbContext>();
+            optionsBuilder.UseSqlServer(connectionString);
+
+            return new EShopDbContext(optionsBuilder.Options);
+        }
+    }
+}
+```
+
+Sau đó, chọn phải chọn `project` `eShopSolution.Data` chọn `Setup as startup project`
+
+- Vào `Menu` `Tools`
+- Chọn `Manage Package`
+- Chọn `Console`
+- Chọn `project` `eShopSolution.Data` tại `dropdown`
+- Gõ lệnh `Add-Migration Initial` và nhấn `Enter` (cần phải cài đặt thư viện: `Microsoft.EntityFrameworkCore.Tools`)
+
+![Image](md_assets/migration.png)
+
+- Chạy lệnh `update-database` để tạo CSDL từ các tập tin `migrations`
+
+![Image](md_assets/db.png)
