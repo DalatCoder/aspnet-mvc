@@ -418,3 +418,102 @@ Tạo 2 thư mục:
 - Dùng `Fluent API configuration` (thường dùng)
 
 ![Image](md_assets/ef.png)
+
+### 3.3. Entity Framework
+
+- Là một `ORM`
+- Quản lý các `table` thông qua các `proxy`, quản lý `table` thông qua
+  các `class` trong `C#`
+- Trái tim của `Entity Framework` là lớp `DbContext`, nơi chứa mọi `config`
+
+### 3.4. Cấu hình Entity thông qua `Fluent API`
+
+- Tạo `folder` `Configurations` tại `project` `eShopSolution.Data`
+- Tạo `class` cấu hình tương ứng với mỗi `entity`
+- `override` phương thức `OnModelCreating` tại lớp `DbContext`
+
+Bên trong folder `Configurations`, ta tiến hành tạo lần lượt các lớp `configuration` tương ứng với các `entity`. Các lớp này cần phải:
+
+- Thực thi `interface` `IEntityTypeConfiguration`
+- Tại phương thức `Configure`, ta có thể cấu hình khá nhiều thông tin liên quan
+  tới bảng và các trường dữ liệu, cũng như mối quan hệ giữa các `entity`
+
+  - Đặt tên bảng: `builder.ToTable("Orders")`
+  - Đặt khóa chính: `builder.HasKey(x => x.Id)`
+  - Cấu hình thuộc tính: `builder.Property(x => x.ShipEmail).IsRequired().IsUnicode(false).HasMaxLength(50)`
+  - Cấu hình mối quan hệ nhiều - nhiều (cần `class` trung gian): giữa `Category` và `Product` thông qua bảng trung gian `ProductInCategory`
+  - Cấu hình mối quan hệ 1 nhiều: giữa `Order` và `OrderDetail`, cấu hình trên lớp `OrderDetail`
+
+Để cấu hình mối quan hệ giữa các `Entity`, bên trong `Entity` cần khai báo các đối tượng tương ứng.
+
+- 1 `Order` có nhiều `OrderDetail`, như vậy bên trong `Order` phải có 1 `List<OrderDetail>`, ngược lại bên trong `OrderDetail` phải có 1 đối tượng `Order`
+
+- ```csharp
+    namespace eShopSolution.Data.Entities
+    {
+      public class Order
+        {
+            public int Id { set; get; }
+            public DateTime OrderDate { set; get; }
+            public Guid UserId { set; get; }
+            public string ShipName { set; get; }
+            public string ShipAddress { set; get; }
+            public string ShipEmail { set; get; }
+            public string ShipPhoneNumber { set; get; }
+            public OrderStatus Status { set; get; }
+
+            public List<OrderDetail> OrderDetails { get; set; }
+        }
+    }
+  ```
+
+- ```csharp
+    namespace eShopSolution.Data.Entities
+    {
+        public class OrderDetail
+        {
+            public int OrderId { set; get; }
+            public int ProductId { set; get; }
+            public int Quantity { set; get; }
+            public decimal Price { set; get; }
+
+            public Order Order { get; set; }
+
+            public Product Product { get; set; }
+        }
+    }
+  ```
+
+Sau khi cấu hình các `Entity`, ta cần `load` các cấu hình này vào `DbContext` thông qua việc ghi đè phương thức `OnModelCreating`
+
+```csharp
+namespace eShopSolution.Data.EF
+{
+    public class EShopDbContext : DbContext
+    {
+        public EShopDbContext(DbContextOptions options) : base(options) { }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.ApplyConfiguration(new CartConfiguration());
+
+            modelBuilder.ApplyConfiguration(new AppConfigConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductConfiguration());
+            modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductInCategoryConfiguration());
+            modelBuilder.ApplyConfiguration(new OrderConfiguration());
+
+            modelBuilder.ApplyConfiguration(new OrderDetailConfiguration());
+            modelBuilder.ApplyConfiguration(new CategoryTranslationConfiguration());
+            modelBuilder.ApplyConfiguration(new ContactConfiguration());
+            modelBuilder.ApplyConfiguration(new LanguageConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductTranslationConfiguration());
+            modelBuilder.ApplyConfiguration(new PromotionConfiguration());
+            modelBuilder.ApplyConfiguration(new TransactionConfiguration());
+
+            // base.OnModelCreating(modelBuilder);
+        }
+    }
+}
+```
+
+![Image](md_assets/configuration.png)
