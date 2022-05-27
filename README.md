@@ -687,3 +687,116 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 - Cập nhật `dabase` thông qua `Update-Database`
 
 ![Image](md_assets/seeddata.png)
+
+### 3.7. Setup Identity
+
+Cấu hình `Entity Identity` để tạo ra các bảng liên quan đến chứng thực và phân quyền người dùng
+
+- Chọn `project` `eShopSolution.Data`
+- Cần phải cài gói: `Identity.EntityFrameworkCore`
+- Chỉnh sửa `class` `EShopDbContext` kế thừa từ `IdentityDbContext`
+
+Ta cần tạo ra các lớp liên quan, bao gồm:
+
+- `AppUser`: kế thừa `IdentityUser<Guid>`, với `Guid` là khóa chính của lớp này (`table` này)
+- `AppRole`: kế thừa `IdentityRole<Guid>`, với `Guid` là khóa chính của lớp này (`table` này)
+
+```csharp
+namespace eShopSolution.Data.Entities
+{
+    public class AppUser : IdentityUser<Guid>
+    {
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public DateTime Dob { get; set; }
+    }
+}
+```
+
+```csharp
+namespace eShopSolution.Data.Entities
+{
+    public class AppRole : IdentityRole<Guid>
+    {
+        public string Description { get; set; }
+    }
+}
+```
+
+Tạo cấu hình tương ứng cho 2 `entity` `AppUser` và `AppRole` thông qua `Fluent API`
+
+- `AppUserConfiguration`
+- `AppRoleConfiguration`
+
+Sau đó, chỉnh sửa `class` kế thừa của `EShopDbContext`
+
+```csharp
+namespace eShopSolution.Data.EF
+{
+    public class EShopDbContext : IdentityDbContext<AppUser, AppRole, Guid>
+    {
+        public EShopDbContext(DbContextOptions options) : base(options)
+        {
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Configure using Fluent API
+            modelBuilder.ApplyConfiguration(new CartConfiguration());
+
+            modelBuilder.ApplyConfiguration(new AppConfigConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductConfiguration());
+            modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductInCategoryConfiguration());
+            modelBuilder.ApplyConfiguration(new OrderConfiguration());
+
+            modelBuilder.ApplyConfiguration(new OrderDetailConfiguration());
+            modelBuilder.ApplyConfiguration(new CategoryTranslationConfiguration());
+            modelBuilder.ApplyConfiguration(new ContactConfiguration());
+            modelBuilder.ApplyConfiguration(new LanguageConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductTranslationConfiguration());
+            modelBuilder.ApplyConfiguration(new PromotionConfiguration());
+            modelBuilder.ApplyConfiguration(new TransactionConfiguration());
+
+            // Configure for Identity
+            modelBuilder.ApplyConfiguration(new AppUserConfiguration());
+            modelBuilder.ApplyConfiguration(new AppRoleConfiguration());
+
+            modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("AppUserClaims");
+            modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("AppUserRoles").HasKey(x => new { x.UserId, x.RoleId });
+            modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("AppUserLogins").HasKey(x => x.UserId);
+            modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("AppRoleClaims");
+            modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("AppUserTokens").HasKey(x => x.UserId);
+
+            // Database seeding
+            modelBuilder.Seed();
+
+            // base.OnModelCreating(modelBuilder);
+        }
+    }
+}
+```
+
+Cập nhật mối quan hệ tại các `entity` có liên quan đến `AppUser`, bao gồm:
+
+- `Cart`
+- `Order`
+- `Transaction`
+
+Cấu hình `Fluent API` tương ứng cho các `entity`, bao gồm:
+
+- `CartConfiguration`
+- `OrderConfiguration`
+- `TransactionConfiguration`
+
+Chạy `migration`: `Add-Migration AspNetCoreIdentityDatabase`
+
+Cập nhật `database`: `Update-Database`
+
+Tạo dữ liệu mẫu cho các `entity` vừa được thêm vào tại tập tin `ModelBuilderExtensions.cs`
+
+Tiếp tục `migration`: `Add-Migration SeedIdentityUser`
+
+Tiếp tục cập nhật: `Update-Database`
+
+![Image](md_assets/userrole.png)

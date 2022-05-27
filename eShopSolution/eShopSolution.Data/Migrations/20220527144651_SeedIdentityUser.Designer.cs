@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using eShopSolution.Data.EF;
 
 namespace eShopSolution.Data.Migrations
 {
     [DbContext(typeof(EShopDbContext))]
-    partial class EShopDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220527144651_SeedIdentityUser")]
+    partial class SeedIdentityUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -258,7 +260,7 @@ namespace eShopSolution.Data.Migrations
                             Id = new Guid("f9246e52-297e-4d04-964f-cc930e93947a"),
                             AccessFailedCount = 0,
                             ConcurrencyStamp = "fbf1a54f-46eb-4f95-88f2-eb89e7dbed66",
-                            Dob = new DateTime(200, 3, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Dob = new DateTime(2000, 3, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "hieuntctk42@gmail.com",
                             EmailConfirmed = true,
                             FirstName = "Hieu",
