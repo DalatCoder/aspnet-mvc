@@ -47,6 +47,9 @@ namespace eShopSolution.Data.EF
             modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("AppRoleClaims");
             modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("AppUserTokens").HasKey(x => x.UserId);
 
+            // Product Image 
+            modelBuilder.ApplyConfiguration(new ProductImageConfiguration());
+
             // Database seeding
             modelBuilder.Seed();
 
@@ -75,5 +78,7 @@ namespace eShopSolution.Data.EF
         public DbSet<Promotion> Promotions { get; set; }
 
         public DbSet<Transaction> Transactions { get; set; }
+
+        public DbSet<ProductImage> ProductImages { get; set; }
     }
 }

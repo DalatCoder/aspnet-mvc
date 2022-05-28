@@ -10,3 +10,8 @@ C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Application
 C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Application\obj\Debug\net5.0\refint\eShopSolution.Application.dll
 C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Application\obj\Debug\net5.0\eShopSolution.Application.pdb
 C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Application\obj\Debug\net5.0\ref\eShopSolution.Application.dll
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Application\bin\Debug\net5.0\eShopSolution.Data.dll
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Application\bin\Debug\net5.0\eShopSolution.Utilities.dll
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Application\bin\Debug\net5.0\eShopSolution.Data.pdb
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Application\bin\Debug\net5.0\eShopSolution.Utilities.pdb
+C:\Users\DALATHUB\Desktop\Dev\aspnet-mvc\eShopSolution\eShopSolution.Application\obj\Debug\net5.0\eShopSolution.Application.csproj.CopyComplete

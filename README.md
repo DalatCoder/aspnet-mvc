@@ -1072,3 +1072,85 @@ Sau đó, ta tiến hành hoàn thiện các phương thức tại `ManageProduc
 - Tạo `project` mới, đặt tên `eShopSolution.Utilities`
 - Tạo `folder` mới, đặt tên `Exceptions`
 - Tạo `exception` mới, đặt tên `EShopException`
+
+## 5. Quản lý hình ảnh cho sản phẩm
+
+Có nhiều phong cách:
+
+- Tạo 1 trường `xml` hoặc `json` để chứa danh sách ảnh vào bảng `product`
+- Tạo 1 bảng riêng (ưu tiên, tận dụng `sql query` để tối ưu tốc độ)
+
+### 5.1. Tạo `entity` mới
+
+```csharp
+namespace eShopSolution.Data.Entities
+{
+    public class ProductImage
+    {
+        public int Id { get; set; }
+        public int ProductId { get; set; }
+        public string ImagePath { get; set; }
+        public string Caption { get; set; }
+        public bool IsDefault { get; set; }
+        public DateTime DateCreated { get; set; }
+        public int SortOrder { get; set; }
+        public int FileSize { get; set; }
+
+        public Product Product { get; set; }
+    }
+}
+```
+
+### 5.2. Cấu hình `entity` sử dụng `Fluent API`
+
+```csharp
+namespace eShopSolution.Data.Configurations
+{
+    public class ProductImageConfiguration : IEntityTypeConfiguration<ProductImage>
+    {
+        public void Configure(EntityTypeBuilder<ProductImage> builder)
+        {
+            builder.ToTable("ProductImages");
+
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.Id).UseIdentityColumn();
+
+            builder.Property(x => x.ImagePath).HasMaxLength(200).IsRequired();
+            builder.Property(x => x.Caption).HasMaxLength(200);
+
+            builder
+                .HasOne(x => x.Product)
+                .WithMany(x => x.ProductImages)
+                .HasForeignKey(x => x.ProductId);
+        }
+    }
+}
+```
+
+### 5.3. Cập nhật `EShopDbContext`
+
+```csharp
+namespace eShopSolution.Data.EF
+{
+    public class EShopDbContext : IdentityDbContext<AppUser, AppRole, Guid>
+    {
+        public EShopDbContext(DbContextOptions options) : base(options) { }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Product Image
+            modelBuilder.ApplyConfiguration(new ProductImageConfiguration());
+        }
+
+        public DbSet<ProductImage> ProductImages { get; set; }
+    }
+}
+```
+
+### 5.4. Tiến hành `migrate`
+
+- Chọn `project` `eShopSolution.Data`, đặt `Startup Project`
+- Mở cửa sổ `Package Manage Console`
+- Chọn `project` `eShopSolution.Data`
+- Chạy lệnh `Add-Migration AddProductImageTable`
+- Chạy lệnh `Update-Database`
