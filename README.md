@@ -800,3 +800,128 @@ Tiếp tục `migration`: `Add-Migration SeedIdentityUser`
 Tiếp tục cập nhật: `Update-Database`
 
 ![Image](md_assets/userrole.png)
+
+## 4. Tầng `application`
+
+Làm việc tại `project` `eShopSolution.Application`
+
+Chia theo các `module`, thường 1 dự án sẽ có các `module` như `system`, `catalog` (quản lý sản phẩm),...
+
+- `Catalog`: làm việc với `product` và `product_category`.
+- `Catalog` gồm 2 phần:
+  - `Interface`: Tất cả phương thức của 1 `class` đều định nghĩa thông qua `interface`, làm bản đồ
+    để các `class` `implement` cái `interface` này.
+  - Áp dụng `DI` (`Dependency Injection`)
+  - Tìm hiểu về `SOLID`
+
+Nên chia thành 2 `interface`:
+
+- `IManageProductService`: dành cho phần `admin`
+- `IPublicProductService`: dành cho phần `customer`
+
+`ProductViewModel`: thường lấy ra các thuộc tính mà chúng ta muốn hiển thị lên
+
+Tạo `folder` `eShopSolution.Application` `Dtos` để chứa các `DTO` thông dụng, được
+dùng lại nhiều lần, ví dụ như `DTO` xác định cấu trúc `response`. Cò được gọi
+là `Common DTOs`
+
+Trường hợp dưới đây tạo 1 `common dto` đặt tên `PagedViewModel`, `dto` này có nhiệm
+vụ lưu trữ số lượng `record` lấy ra và danh sách các phần tử thuộc kiểu bất kì (kiểu `T`, `generic type`).
+Phương thức `GetAll` sẽ trả về đối tượng thuộc kiểu này.
+
+```csharp
+namespace eShopSolution.Application.Dtos
+{
+    public class PagedViewModel<T>
+    {
+        public int TotalRecord { get; set; }
+        List<T> Items { get; set; }
+    }
+}
+```
+
+Để truy cập đến đối tượng `DbContext` tại tầng `Data`, ta cần thêm `reference` từ tầng `Application` đến
+tầng `Data`
+
+- Chọn tầng `Application`
+- Chuột phải lên `Dependencies`
+- `Add Project Reference`
+- Click chọn `eShopSolution.Data`
+
+Tại phương thức `Create`, ta có thể thêm 1 `product` vào cơ sở dữ liệu 1 cách nhanh chóng như dưới đây
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products
+{
+    public class ManageProductService : IManageProductService
+    {
+        private readonly EShopDbContext _context;
+        public ManageProductService(EShopDbContext context)
+        {
+            _context = context;
+        }
+
+        public int Create(ProductCreateRequest product)
+        {
+            var newProduct = new Product();
+
+            _context.Products.Add(newProduct);
+            _context.SaveChanges();
+
+            return newProduct.Id;
+        }
+    }
+}
+```
+
+Để nhanh và hiệu quả hơn, ta có thể sử dụng phương thức `SaveChangesAsync` thay vì `SaveChanges`. Để
+chuyển hướng sang dạng `asynchronous`, ta cần phải làm 1 số công việc thay đổi sau
+
+- Chuyển kết quả trả về từ `int` thành `Task<int>`
+
+  ```csharp
+  namespace eShopSolution.Application.Catalog.Products
+  {
+      public interface IManageProductService
+      {
+          Task<int> Create(ProductCreateRequest product);
+
+          Task<int> Update(ProductUpdateRequest product);
+
+          Task<int> Delete(int id);
+
+          Task<PagedViewModel<ProductViewModel>> GetAll();
+
+          Task<PagedViewModel<ProductViewModel>> GetAllPaging(string keyword, int pageIndex, int pageSize);
+      }
+  }
+  ```
+
+- Chuyển thành phương thức `async`
+
+  ```csharp
+  public async Task<int> Create(ProductCreateRequest product)
+  {
+      var newProduct = new Product()
+      {
+          Price = product.Price,
+      };
+
+      _context.Products.Add(newProduct);
+      return await _context.SaveChangesAsync();
+  }
+  ```
+
+Dưới đây là cấu trúc ban đầu của tầng `application`, trong đó:
+
+- `module` `Catalog` chứa `folder` `Products`
+- Tại `Products` chứa:
+
+  - `Dtos`: các `dto` cần thiết, bao gồm: `CreateRequest` (Create), `UpdateRequest` (Update) và `ProductViewModel` (Read)
+  - 2 `interface`, 1 `interface` cho các thao tác quản lý và 1 `interface` cho phân hệ `customer`
+  - 2 `class` tương ứng với 2 `interface`
+
+- `folder` `Dtos` ngoài cùng còn được gọi là `Common Dtos`, chứa các `dto` dùng chung cho
+  tất cả `module`
+
+![Image](md_assets/application.png)
