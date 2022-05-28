@@ -925,3 +925,150 @@ Dưới đây là cấu trúc ban đầu của tầng `application`, trong đó:
   tất cả `module`
 
 ![Image](md_assets/application.png)
+
+### 4.1. Tạo phương thức `search` và phân trang
+
+Tất cả phương thức `paging` đều yêu cầu có 2 tham số `pageIndex` và `pageSize`, do đó
+ta nên đưa 2 tham số này vào 1 `class` chung để dễ quản lý
+
+```csharp
+namespace eShopSolution.Application.Dtos
+{
+    public class PagingRequestBase
+    {
+        public int PageIndex { get; set; }
+        public int PageSize { get; set; }
+    }
+}
+```
+
+Sau đó, ta có thể tạo 1 class trừu tượng các yêu cầu trong việc phân trang cho `products` như sau:
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products.Dtos
+{
+    public class GetProductPagingRequest : PagingRequestBase
+    {
+        public string Keyword { get; set; }
+        public List<int> CategoryIds { get; set; }
+    }
+}
+```
+
+Tiếp theo, tại phương thức `GetAllPaging`, ta sẽ sửa thành:
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products
+{
+    public interface IManageProductService
+    {
+        Task<int> Create(ProductCreateRequest product);
+
+        Task<int> Update(ProductUpdateRequest product);
+
+        Task<int> Delete(int id);
+
+        Task<PagedResult<ProductViewModel>> GetAll();
+
+        Task<PagedResult<ProductViewModel>> GetAllPaging(GetProductPagingRequest request);
+    }
+}
+```
+
+Lúc này, cho dù có thêm bao nhiêu tham số vào `GetProductPagingRequest` thì phương thức `GetAllPaging` cũng không bị thay đổi,
+do tất cả tham số đều đã được đóng gói vào `GetProductPagingRequest`
+
+Về phần `ProductUpdateRequest`, ta có thể tách `Id` thành 1 tham số riêng hoặc đóng gói vào `ProductUpdateRequest` cũng
+được.
+
+- Không nên `update` tất cả cùng 1 lúc.
+- Nên tách riêng việc `update` `Price`
+- Nên tách riêng việc `update` `Stock`
+- Thường `update` những thông tin tổng quan ở trong `ProductTranslation` thôi
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products.Dtos
+{
+    public class ProductUpdateRequest
+    {
+        public int Id { get; set; }
+
+        public string Name { set; get; }
+        public string Description { set; get; }
+        public string Details { set; get; }
+        public string SeoDescription { set; get; }
+        public string SeoTitle { set; get; }
+
+        public string SeoAlias { get; set; }
+        public string LanguageId { set; get; }
+    }
+}
+```
+
+Về phần `ProductCreateRequest`,
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products.Dtos
+{
+    public class ProductCreateRequest
+    {
+        public decimal Price { get; set; }
+        public decimal OriginalPrice { set; get; }
+        public int Stock { set; get; }
+
+        public string Name { set; get; }
+        public string Description { set; get; }
+        public string Details { set; get; }
+        public string SeoDescription { set; get; }
+        public string SeoTitle { set; get; }
+
+        public string SeoAlias { get; set; }
+        public string LanguageId { set; get; }
+    }
+}
+```
+
+Phần `update` chỉ nên `update` các thông tin mô tả, các thông tin khác liên quan
+đến `price`, `stock` hay `viewcount` thì nên tách thành các phương thức riêng
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products
+{
+    public interface IManageProductService
+    {
+        Task<int> Create(ProductCreateRequest product);
+
+        Task<int> Update(ProductUpdateRequest product);
+
+        Task<bool> UpdatePrice(int productId, int newPrice);
+        Task<bool> UpdateStock(int productId, int addedQuantity);
+        Task AddViewCount(int productId);
+
+        Task<int> Delete(int id);
+
+        Task<PagedResult<ProductViewModel>> GetAll();
+
+        Task<PagedResult<ProductViewModel>> GetAllPaging(GetProductPagingRequest request);
+    }
+}
+```
+
+Lúc này, số lượng `Dto` đã khá nhiều bên trong `module` `products`, ta nên tạo
+`folder` để chứa `dto` tương ứng cho 2 phân hệ:
+
+- `Dtos/Manage`: chứa `dto` thuộc phần `admin`
+- `Dtos/Public`: chứa `dto` thuộc phần `customer`
+
+Tiến hành di chuyển các `dto` có sẵn vào thư mục `Manage` rồi sau đó thay đổi lại `namespace` cho các `dto` này
+
+![Image](md_assets/structure.png)
+
+Sau đó, ta tiến hành hoàn thiện các phương thức tại `ManageProductService`
+
+### 4.2. `custom exception`
+
+Để dễ dàng phân biệt và xử lý lỗi giữa các `exception`, ta có thể tạo 1 `custom exception`.
+
+- Tạo `project` mới, đặt tên `eShopSolution.Utilities`
+- Tạo `folder` mới, đặt tên `Exceptions`
+- Tạo `exception` mới, đặt tên `EShopException`

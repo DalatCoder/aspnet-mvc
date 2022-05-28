@@ -1697,6 +1697,16 @@
         "runtime": {
           "bin/placeholder/eShopSolution.Data.dll": {}
         }
+      },
+      "eShopSolution.Utilities/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v5.0",
+        "compile": {
+          "bin/placeholder/eShopSolution.Utilities.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/eShopSolution.Utilities.dll": {}
+        }
       }
     }
   },
@@ -6243,11 +6253,17 @@
       "type": "project",
       "path": "../eShopSolution.Data/eShopSolution.Data.csproj",
       "msbuildProject": "../eShopSolution.Data/eShopSolution.Data.csproj"
+    },
+    "eShopSolution.Utilities/1.0.0": {
+      "type": "project",
+      "path": "../eShopSolution.Utilities/eShopSolution.Utilities.csproj",
+      "msbuildProject": "../eShopSolution.Utilities/eShopSolution.Utilities.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net5.0": [
-      "eShopSolution.Data >= 1.0.0"
+      "eShopSolution.Data >= 1.0.0",
+      "eShopSolution.Utilities >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -6279,6 +6295,9 @@
           "projectReferences": {
             "C:\\Users\\DALATHUB\\Desktop\\Dev\\aspnet-mvc\\eShopSolution\\eShopSolution.Data\\eShopSolution.Data.csproj": {
               "projectPath": "C:\\Users\\DALATHUB\\Desktop\\Dev\\aspnet-mvc\\eShopSolution\\eShopSolution.Data\\eShopSolution.Data.csproj"
+            },
+            "C:\\Users\\DALATHUB\\Desktop\\Dev\\aspnet-mvc\\eShopSolution\\eShopSolution.Utilities\\eShopSolution.Utilities.csproj": {
+              "projectPath": "C:\\Users\\DALATHUB\\Desktop\\Dev\\aspnet-mvc\\eShopSolution\\eShopSolution.Utilities\\eShopSolution.Utilities.csproj"
             }
           }
         }
