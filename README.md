@@ -1316,3 +1316,11 @@ Hiện giờ có 2 `dto` tên `GetProductPagingRequest`, chỉ khác nhau ở `n
 `manage` ra ngoài folder `products` và đặt lại tên cho các `dto` trùng.
 
 ![Image](md_assets/refactor.png)
+
+### 7.2. Tạo dự án `BackendAPI`
+
+- Chọn `eShopSolution`
+- Chuột phải, `add project`
+- Chọn `ASP.NET Core Web App (MVC)`
+- Đặt tên `eShopSolution.BackendApi`
+- Tick chọn cấu hình cho `HTTPS`
