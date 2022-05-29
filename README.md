@@ -800,3 +800,728 @@ Tiếp tục `migration`: `Add-Migration SeedIdentityUser`
 Tiếp tục cập nhật: `Update-Database`
 
 ![Image](md_assets/userrole.png)
+
+## 4. Tầng `application`
+
+Làm việc tại `project` `eShopSolution.Application`
+
+Chia theo các `module`, thường 1 dự án sẽ có các `module` như `system`, `catalog` (quản lý sản phẩm),...
+
+- `Catalog`: làm việc với `product` và `product_category`.
+- `Catalog` gồm 2 phần:
+  - `Interface`: Tất cả phương thức của 1 `class` đều định nghĩa thông qua `interface`, làm bản đồ
+    để các `class` `implement` cái `interface` này.
+  - Áp dụng `DI` (`Dependency Injection`)
+  - Tìm hiểu về `SOLID`
+
+Nên chia thành 2 `interface`:
+
+- `IManageProductService`: dành cho phần `admin`
+- `IPublicProductService`: dành cho phần `customer`
+
+`ProductViewModel`: thường lấy ra các thuộc tính mà chúng ta muốn hiển thị lên
+
+Tạo `folder` `eShopSolution.Application` `Dtos` để chứa các `DTO` thông dụng, được
+dùng lại nhiều lần, ví dụ như `DTO` xác định cấu trúc `response`. Cò được gọi
+là `Common DTOs`
+
+Trường hợp dưới đây tạo 1 `common dto` đặt tên `PagedViewModel`, `dto` này có nhiệm
+vụ lưu trữ số lượng `record` lấy ra và danh sách các phần tử thuộc kiểu bất kì (kiểu `T`, `generic type`).
+Phương thức `GetAll` sẽ trả về đối tượng thuộc kiểu này.
+
+```csharp
+namespace eShopSolution.Application.Dtos
+{
+    public class PagedViewModel<T>
+    {
+        public int TotalRecord { get; set; }
+        List<T> Items { get; set; }
+    }
+}
+```
+
+Để truy cập đến đối tượng `DbContext` tại tầng `Data`, ta cần thêm `reference` từ tầng `Application` đến
+tầng `Data`
+
+- Chọn tầng `Application`
+- Chuột phải lên `Dependencies`
+- `Add Project Reference`
+- Click chọn `eShopSolution.Data`
+
+Tại phương thức `Create`, ta có thể thêm 1 `product` vào cơ sở dữ liệu 1 cách nhanh chóng như dưới đây
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products
+{
+    public class ManageProductService : IManageProductService
+    {
+        private readonly EShopDbContext _context;
+        public ManageProductService(EShopDbContext context)
+        {
+            _context = context;
+        }
+
+        public int Create(ProductCreateRequest product)
+        {
+            var newProduct = new Product();
+
+            _context.Products.Add(newProduct);
+            _context.SaveChanges();
+
+            return newProduct.Id;
+        }
+    }
+}
+```
+
+Để nhanh và hiệu quả hơn, ta có thể sử dụng phương thức `SaveChangesAsync` thay vì `SaveChanges`. Để
+chuyển hướng sang dạng `asynchronous`, ta cần phải làm 1 số công việc thay đổi sau
+
+- Chuyển kết quả trả về từ `int` thành `Task<int>`
+
+  ```csharp
+  namespace eShopSolution.Application.Catalog.Products
+  {
+      public interface IManageProductService
+      {
+          Task<int> Create(ProductCreateRequest product);
+
+          Task<int> Update(ProductUpdateRequest product);
+
+          Task<int> Delete(int id);
+
+          Task<PagedViewModel<ProductViewModel>> GetAll();
+
+          Task<PagedViewModel<ProductViewModel>> GetAllPaging(string keyword, int pageIndex, int pageSize);
+      }
+  }
+  ```
+
+- Chuyển thành phương thức `async`
+
+  ```csharp
+  public async Task<int> Create(ProductCreateRequest product)
+  {
+      var newProduct = new Product()
+      {
+          Price = product.Price,
+      };
+
+      _context.Products.Add(newProduct);
+      return await _context.SaveChangesAsync();
+  }
+  ```
+
+Dưới đây là cấu trúc ban đầu của tầng `application`, trong đó:
+
+- `module` `Catalog` chứa `folder` `Products`
+- Tại `Products` chứa:
+
+  - `Dtos`: các `dto` cần thiết, bao gồm: `CreateRequest` (Create), `UpdateRequest` (Update) và `ProductViewModel` (Read)
+  - 2 `interface`, 1 `interface` cho các thao tác quản lý và 1 `interface` cho phân hệ `customer`
+  - 2 `class` tương ứng với 2 `interface`
+
+- `folder` `Dtos` ngoài cùng còn được gọi là `Common Dtos`, chứa các `dto` dùng chung cho
+  tất cả `module`
+
+![Image](md_assets/application.png)
+
+### 4.1. Tạo phương thức `search` và phân trang
+
+Tất cả phương thức `paging` đều yêu cầu có 2 tham số `pageIndex` và `pageSize`, do đó
+ta nên đưa 2 tham số này vào 1 `class` chung để dễ quản lý
+
+```csharp
+namespace eShopSolution.Application.Dtos
+{
+    public class PagingRequestBase
+    {
+        public int PageIndex { get; set; }
+        public int PageSize { get; set; }
+    }
+}
+```
+
+Sau đó, ta có thể tạo 1 class trừu tượng các yêu cầu trong việc phân trang cho `products` như sau:
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products.Dtos
+{
+    public class GetProductPagingRequest : PagingRequestBase
+    {
+        public string Keyword { get; set; }
+        public List<int> CategoryIds { get; set; }
+    }
+}
+```
+
+Tiếp theo, tại phương thức `GetAllPaging`, ta sẽ sửa thành:
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products
+{
+    public interface IManageProductService
+    {
+        Task<int> Create(ProductCreateRequest product);
+
+        Task<int> Update(ProductUpdateRequest product);
+
+        Task<int> Delete(int id);
+
+        Task<PagedResult<ProductViewModel>> GetAll();
+
+        Task<PagedResult<ProductViewModel>> GetAllPaging(GetProductPagingRequest request);
+    }
+}
+```
+
+Lúc này, cho dù có thêm bao nhiêu tham số vào `GetProductPagingRequest` thì phương thức `GetAllPaging` cũng không bị thay đổi,
+do tất cả tham số đều đã được đóng gói vào `GetProductPagingRequest`
+
+Về phần `ProductUpdateRequest`, ta có thể tách `Id` thành 1 tham số riêng hoặc đóng gói vào `ProductUpdateRequest` cũng
+được.
+
+- Không nên `update` tất cả cùng 1 lúc.
+- Nên tách riêng việc `update` `Price`
+- Nên tách riêng việc `update` `Stock`
+- Thường `update` những thông tin tổng quan ở trong `ProductTranslation` thôi
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products.Dtos
+{
+    public class ProductUpdateRequest
+    {
+        public int Id { get; set; }
+
+        public string Name { set; get; }
+        public string Description { set; get; }
+        public string Details { set; get; }
+        public string SeoDescription { set; get; }
+        public string SeoTitle { set; get; }
+
+        public string SeoAlias { get; set; }
+        public string LanguageId { set; get; }
+    }
+}
+```
+
+Về phần `ProductCreateRequest`,
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products.Dtos
+{
+    public class ProductCreateRequest
+    {
+        public decimal Price { get; set; }
+        public decimal OriginalPrice { set; get; }
+        public int Stock { set; get; }
+
+        public string Name { set; get; }
+        public string Description { set; get; }
+        public string Details { set; get; }
+        public string SeoDescription { set; get; }
+        public string SeoTitle { set; get; }
+
+        public string SeoAlias { get; set; }
+        public string LanguageId { set; get; }
+    }
+}
+```
+
+Phần `update` chỉ nên `update` các thông tin mô tả, các thông tin khác liên quan
+đến `price`, `stock` hay `viewcount` thì nên tách thành các phương thức riêng
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products
+{
+    public interface IManageProductService
+    {
+        Task<int> Create(ProductCreateRequest product);
+
+        Task<int> Update(ProductUpdateRequest product);
+
+        Task<bool> UpdatePrice(int productId, int newPrice);
+        Task<bool> UpdateStock(int productId, int addedQuantity);
+        Task AddViewCount(int productId);
+
+        Task<int> Delete(int id);
+
+        Task<PagedResult<ProductViewModel>> GetAll();
+
+        Task<PagedResult<ProductViewModel>> GetAllPaging(GetProductPagingRequest request);
+    }
+}
+```
+
+Lúc này, số lượng `Dto` đã khá nhiều bên trong `module` `products`, ta nên tạo
+`folder` để chứa `dto` tương ứng cho 2 phân hệ:
+
+- `Dtos/Manage`: chứa `dto` thuộc phần `admin`
+- `Dtos/Public`: chứa `dto` thuộc phần `customer`
+
+Tiến hành di chuyển các `dto` có sẵn vào thư mục `Manage` rồi sau đó thay đổi lại `namespace` cho các `dto` này
+
+![Image](md_assets/structure.png)
+
+Sau đó, ta tiến hành hoàn thiện các phương thức tại `ManageProductService`
+
+### 4.2. `custom exception`
+
+Để dễ dàng phân biệt và xử lý lỗi giữa các `exception`, ta có thể tạo 1 `custom exception`.
+
+- Tạo `project` mới, đặt tên `eShopSolution.Utilities`
+- Tạo `folder` mới, đặt tên `Exceptions`
+- Tạo `exception` mới, đặt tên `EShopException`
+
+## 5. Quản lý hình ảnh cho sản phẩm
+
+Có nhiều phong cách:
+
+- Tạo 1 trường `xml` hoặc `json` để chứa danh sách ảnh vào bảng `product`
+- Tạo 1 bảng riêng (ưu tiên, tận dụng `sql query` để tối ưu tốc độ)
+
+### 5.1. Tạo `entity` mới
+
+```csharp
+namespace eShopSolution.Data.Entities
+{
+    public class ProductImage
+    {
+        public int Id { get; set; }
+        public int ProductId { get; set; }
+        public string ImagePath { get; set; }
+        public string Caption { get; set; }
+        public bool IsDefault { get; set; }
+        public DateTime DateCreated { get; set; }
+        public int SortOrder { get; set; }
+        public int FileSize { get; set; }
+
+        public Product Product { get; set; }
+    }
+}
+```
+
+### 5.2. Cấu hình `entity` sử dụng `Fluent API`
+
+```csharp
+namespace eShopSolution.Data.Configurations
+{
+    public class ProductImageConfiguration : IEntityTypeConfiguration<ProductImage>
+    {
+        public void Configure(EntityTypeBuilder<ProductImage> builder)
+        {
+            builder.ToTable("ProductImages");
+
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.Id).UseIdentityColumn();
+
+            builder.Property(x => x.ImagePath).HasMaxLength(200).IsRequired();
+            builder.Property(x => x.Caption).HasMaxLength(200);
+
+            builder
+                .HasOne(x => x.Product)
+                .WithMany(x => x.ProductImages)
+                .HasForeignKey(x => x.ProductId);
+        }
+    }
+}
+```
+
+### 5.3. Cập nhật `EShopDbContext`
+
+```csharp
+namespace eShopSolution.Data.EF
+{
+    public class EShopDbContext : IdentityDbContext<AppUser, AppRole, Guid>
+    {
+        public EShopDbContext(DbContextOptions options) : base(options) { }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Product Image
+            modelBuilder.ApplyConfiguration(new ProductImageConfiguration());
+        }
+
+        public DbSet<ProductImage> ProductImages { get; set; }
+    }
+}
+```
+
+### 5.4. Tiến hành `migrate`
+
+- Chọn `project` `eShopSolution.Data`, đặt `Startup Project`
+- Mở cửa sổ `Package Manage Console`
+- Chọn `project` `eShopSolution.Data`
+- Chạy lệnh `Add-Migration AddProductImageTable`
+- Chạy lệnh `Update-Database`
+
+### 5.5. Tách lớp `dto`
+
+Bởi vì tầng `application` và tầng `web mvc` đều sử dụng chung `dto`, do đó
+cách tốt nhất là tách `dto` ra 1 `project` riêng.
+
+- Tạo `project` mới
+- Đặt tên `eShopSolution.ViewModels`
+
+Di chuyển các `dto` cần thiết vào `project` `ViewModels`
+
+Sau khi chuyển xong, tiến hành cập nhật lại `namespace` và thêm `project reference` tại
+`project` `Application`
+
+![Image](md_assets/viewmodels.png)
+
+### 5.6. Tạo các phương thức quản lý ảnh
+
+Có thể làm theo 2 dạng:
+
+- Tạo `product` trước, sau đó cập nhật `product_image` sau
+- Đưa `product_image` vào `product_request` và tạo đồng thời
+
+Cần thêm 1 trường `IFormFile` vào `dto` `ProductCreateRequest` để tiếp nhận
+ảnh gửi lên từ `client`.
+
+```csharp
+namespace eShopSolution.ViewModels.Catalog.Products.Manage
+{
+    public class ProductCreateRequest
+    {
+        public decimal Price { get; set; }
+        public decimal OriginalPrice { set; get; }
+        public int Stock { set; get; }
+
+        public string Name { set; get; }
+        public string Description { set; get; }
+        public string Details { set; get; }
+        public string SeoDescription { set; get; }
+        public string SeoTitle { set; get; }
+
+        public string SeoAlias { get; set; }
+        public string LanguageId { set; get; }
+
+        public IFormFile ThumbnailImage { get; set; }
+    }
+}
+```
+
+Đồng thời thêm vào `dto` `ProductUpdateRequest`
+
+```csharp
+namespace eShopSolution.ViewModels.Catalog.Products.Manage
+{
+    public class ProductUpdateRequest
+    {
+        public int Id { get; set; }
+
+        public string Name { set; get; }
+        public string Description { set; get; }
+        public string Details { set; get; }
+        public string SeoDescription { set; get; }
+        public string SeoTitle { set; get; }
+
+        public string SeoAlias { get; set; }
+        public string LanguageId { set; get; }
+
+        public IFormFile ThumbnailImage { get; set; }
+    }
+}
+```
+
+#### 5.6.1. Lưu trữ hình ảnh
+
+Tạo `interface` và `class` chịu trách nhiệm cho việc lưu trữ hình ảnh
+
+```csharp
+namespace eShopSolution.Application.Common
+{
+    public class FileStorageService : IStorageService
+    {
+        private readonly string _userContentFolder;
+        private const string USER_CONTENT_FOLDER_NAME = "user-content";
+
+        public FileStorageService(IWebHostEnvironment webHostEnvironment)
+        {
+            _userContentFolder = Path.Combine(webHostEnvironment.WebRootPath, USER_CONTENT_FOLDER_NAME);
+        }
+
+        public async Task DeleteFileAsync(string fileName)
+        {
+            var filePath = Path.Combine(_userContentFolder, fileName);
+            if (File.Exists(filePath))
+            {
+                await Task.Run(() => File.Delete(filePath));
+            }
+        }
+
+        public string GetFileUrl(string fileName)
+        {
+            return $"/{USER_CONTENT_FOLDER_NAME}/{fileName}";
+        }
+
+        public async Task SaveFileAsync(Stream mediaBinaryStream, string fileName)
+        {
+            var filePath = Path.Combine(_userContentFolder, fileName);
+
+            using var output = new FileStream(filePath, FileMode.Create);
+            await mediaBinaryStream.CopyToAsync(output);
+        }
+    }
+}
+```
+
+Về phần `interface` `IWebHostEnvironment`, ta cần phải chỉnh sửa lại `file` `project` `Application`
+và thêm dòng `FrameworkReference`
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\eShopSolution.Data\eShopSolution.Data.csproj" />
+    <ProjectReference Include="..\eShopSolution.Utilities\eShopSolution.Utilities.csproj" />
+    <ProjectReference Include="..\eShopSolution.ViewModels\eShopSolution.ViewModels.csproj" />
+  </ItemGroup>
+
+</Project>
+```
+
+## 6. Lưu ý về tầng `Application` và `MVC`
+
+Dự án này được phân chia theo kiến trúc `N-layer`, trong đó có các tầng như:
+`Data`, `Application`, `WebApp`
+
+`project` `WebApp` lại tiếp tục được phân chia theo kiến trúc `MVC`
+
+Do đó, phần `Controller` sẽ gần giống như là tầng `Application` vậy, có thể đưa
+`code` từ tầng `Application` vào đây. Tuy nhiên, tác giả muốn tách riêng `logic`
+ra tầng `Application` để dễ quản lý.
+
+Mặt khác, các `dto` được dùng chung ở cả tầng `Application` và tầng `WebApp MVC`.
+Do đó, tác giả đã tách các `dto` này ra 1 `project` riêng và đặt tên `ViewModels`.
+
+Ở tầng `Application` chỉ chứa các `Service`
+
+## 7. Web API
+
+### 7.1. Cập nhật cấu trúc dự án
+
+Hiện giờ có 2 `dto` tên `GetProductPagingRequest`, chỉ khác nhau ở `namespace` `public` hay `manage`.
+Điều này dẫn đến việc nhầm lẫn, do đó, ta sẽ tiến hành đưa toàn bộ `dto` trong 2 folder `public` và
+`manage` ra ngoài folder `products` và đặt lại tên cho các `dto` trùng.
+
+![Image](md_assets/refactor.png)
+
+### 7.2. Tạo dự án `BackendAPI`
+
+- Chọn `eShopSolution`
+- Chuột phải, `add project`
+- Chọn `ASP.NET Core Web App (MVC)`
+- Đặt tên `eShopSolution.BackendApi`
+- Tick chọn cấu hình cho `HTTPS`
+- Bởi vì đang xây dựng `API`, ta có thể xóa thư mục `Views` đi
+
+Tạo `API controller`
+
+- Chuột phải lên `folder` `Controllers`
+- Tạo `API Controller - Empty`
+- Đặt tên `ProductController`
+
+Đặt dự án `eShopSolution.BackendApi` thành `Startup Project`
+
+Chỉnh sửa tập tin cấu hình dành cho môi trường `Development`
+
+```json
+{
+  "ConnectionStrings": {
+    "eShopSolutionDb": "Server=.;Database=eShopSolution;Trusted_Connection=True;"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  }
+}
+```
+
+Tạo tham chiếu dự án
+
+- Chuột phải lên `Dependencies`
+- Thêm tham chiếu đến các `project`:
+  - Application
+  - Data
+  - Utilities
+  - ViewModels
+
+Cấu hình `entity framework`
+
+- Mở tập tin `Startup.cs`
+- Tại phương thức `ConfigureService`
+- Khóa `json` tương ứng với chuỗi kết nối được di chuyển vào `SystemContants` để dễ quản lý
+
+```csharp
+// This method gets called by the runtime. Use this method to add services to the container.
+public void ConfigureServices(IServiceCollection services)
+{
+    services
+        .AddDbContext<EShopDbContext>(
+            options =>
+                options
+                    .UseSqlServer(Configuration.GetConnectionString(SystemConstants.MainConnectionString))
+        );
+
+    services.AddControllersWithViews();
+}
+```
+
+### 7.3. Tạo API mẫu lấy danh sách `product`
+
+Tạo phương thức `GetAll` tại `IPublicProductService`
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products
+{
+    public interface IPublicProductService
+    {
+        Task<PagedResult<ProductViewModel>> GetAllByCategoryId(GetPublicProductPagingRequest request);
+        Task<List<ProductViewModel>> GetAll();
+    }
+}
+```
+
+Cập nhật `ProductController` để nhận vào `IPublicProductService`, thông qua `service`
+này, ta có thể gọi phương thức `GetAll()` để lấy danh sách `products`
+
+```csharp
+namespace eShopSolution.BackendApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductController : ControllerBase
+    {
+        private readonly IPublicProductService _publicProductService;
+        public ProductController(IPublicProductService publicProductService)
+        {
+            _publicProductService = publicProductService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            var products = await _publicProductService.GetAll();
+            return  Ok(products);
+        }
+    }
+}
+```
+
+Để `inject` đối tượng thực thi `IPublicProductService` vào `ProductController`, ta
+cần phải khai báo `Dependency Injection` tại phương thức `ConfigureService` tại
+file `Startup.cs`
+
+Có 1 số phương thức để `inject` đối tượng vào `controller`, tại đây, ta dùng
+phương thức `AddTransient`, tức là mỗi lần server nhận `request`. Hệ thống sẽ
+tự động tạo 1 `object` mới thuộc `class` `PublicProductService` và tự động
+`inject` `object` này vào những `Controller` yêu cầu truyền `IPublicProductService`
+
+```csharp
+// This method gets called by the runtime. Use this method to add services to the container.
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddDbContext<EShopDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString(SystemConstants.MainConnectionString)));
+
+    // Declare Dependency Injections
+    services.AddTransient<IPublicProductService, PublicProductService>();
+
+    services.AddControllersWithViews();
+}
+```
+
+### 7.4. Thêm `Swagger`
+
+`Swagger` là 1 giao diện để hiển thị danh sách `API`, ta có thể thực hiện `test` `API` nhanh
+trên `Swagger`.
+
+- Chọn dự án `BackendApi`
+- Thêm `dependency` `Swashbuckle.AspNetCore`
+
+Thêm `swagger service` tại phương thức `ConfigureService`
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddDbContext<EShopDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString(SystemConstants.MainConnectionString)));
+
+    // Declare Dependency Injections
+    services.AddTransient<IPublicProductService, PublicProductService>();
+
+    services.AddControllersWithViews();
+
+    // Swagger
+    services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Swagger eShop Solution", Version = "v1" });
+    });
+}
+```
+
+Sử dụng `middleware` `Swagger` bên dưới `middleware` `Authorization`
+
+```csharp
+// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+{
+    app.UseAuthorization();
+
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Swagger eShopSolution v1");
+    });
+}
+```
+
+Cập nhật `launchUrl` tại tập tin `launchSettings.json`
+
+```json
+{
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:4725",
+      "sslPort": 44305
+    }
+  },
+  "profiles": {
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "eShopSolution.BackendApi": {
+      "commandName": "Project",
+      "dotnetRunMessages": "true",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "https://localhost:5001;http://localhost:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+```
+
+Kết quả sau khi chạy `BackendApi` server
+
+![Image](md_assets/swagger.png)
