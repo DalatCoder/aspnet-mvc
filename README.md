@@ -1443,3 +1443,85 @@ public void ConfigureServices(IServiceCollection services)
     services.AddControllersWithViews();
 }
 ```
+
+### 7.4. Thêm `Swagger`
+
+`Swagger` là 1 giao diện để hiển thị danh sách `API`, ta có thể thực hiện `test` `API` nhanh
+trên `Swagger`.
+
+- Chọn dự án `BackendApi`
+- Thêm `dependency` `Swashbuckle.AspNetCore`
+
+Thêm `swagger service` tại phương thức `ConfigureService`
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddDbContext<EShopDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString(SystemConstants.MainConnectionString)));
+
+    // Declare Dependency Injections
+    services.AddTransient<IPublicProductService, PublicProductService>();
+
+    services.AddControllersWithViews();
+
+    // Swagger
+    services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Swagger eShop Solution", Version = "v1" });
+    });
+}
+```
+
+Sử dụng `middleware` `Swagger` bên dưới `middleware` `Authorization`
+
+```csharp
+// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+{
+    app.UseAuthorization();
+
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Swagger eShopSolution v1");
+    });
+}
+```
+
+Cập nhật `launchUrl` tại tập tin `launchSettings.json`
+
+```json
+{
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:4725",
+      "sslPort": 44305
+    }
+  },
+  "profiles": {
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "eShopSolution.BackendApi": {
+      "commandName": "Project",
+      "dotnetRunMessages": "true",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "https://localhost:5001;http://localhost:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+```
+
+Kết quả sau khi chạy `BackendApi` server
+
+![Image](md_assets/swagger.png)
