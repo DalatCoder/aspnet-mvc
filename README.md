@@ -1306,3 +1306,13 @@ Mặt khác, các `dto` được dùng chung ở cả tầng `Application` và t
 Do đó, tác giả đã tách các `dto` này ra 1 `project` riêng và đặt tên `ViewModels`.
 
 Ở tầng `Application` chỉ chứa các `Service`
+
+## 7. Web API
+
+### 7.1. Cập nhật cấu trúc dự án
+
+Hiện giờ có 2 `dto` tên `GetProductPagingRequest`, chỉ khác nhau ở `namespace` `public` hay `manage`.
+Điều này dẫn đến việc nhầm lẫn, do đó, ta sẽ tiến hành đưa toàn bộ `dto` trong 2 folder `public` và
+`manage` ra ngoài folder `products` và đặt lại tên cho các `dto` trùng.
+
+![Image](md_assets/refactor.png)
