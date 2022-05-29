@@ -1324,3 +1324,122 @@ Hiện giờ có 2 `dto` tên `GetProductPagingRequest`, chỉ khác nhau ở `n
 - Chọn `ASP.NET Core Web App (MVC)`
 - Đặt tên `eShopSolution.BackendApi`
 - Tick chọn cấu hình cho `HTTPS`
+- Bởi vì đang xây dựng `API`, ta có thể xóa thư mục `Views` đi
+
+Tạo `API controller`
+
+- Chuột phải lên `folder` `Controllers`
+- Tạo `API Controller - Empty`
+- Đặt tên `ProductController`
+
+Đặt dự án `eShopSolution.BackendApi` thành `Startup Project`
+
+Chỉnh sửa tập tin cấu hình dành cho môi trường `Development`
+
+```json
+{
+  "ConnectionStrings": {
+    "eShopSolutionDb": "Server=.;Database=eShopSolution;Trusted_Connection=True;"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  }
+}
+```
+
+Tạo tham chiếu dự án
+
+- Chuột phải lên `Dependencies`
+- Thêm tham chiếu đến các `project`:
+  - Application
+  - Data
+  - Utilities
+  - ViewModels
+
+Cấu hình `entity framework`
+
+- Mở tập tin `Startup.cs`
+- Tại phương thức `ConfigureService`
+- Khóa `json` tương ứng với chuỗi kết nối được di chuyển vào `SystemContants` để dễ quản lý
+
+```csharp
+// This method gets called by the runtime. Use this method to add services to the container.
+public void ConfigureServices(IServiceCollection services)
+{
+    services
+        .AddDbContext<EShopDbContext>(
+            options =>
+                options
+                    .UseSqlServer(Configuration.GetConnectionString(SystemConstants.MainConnectionString))
+        );
+
+    services.AddControllersWithViews();
+}
+```
+
+### 7.3. Tạo API mẫu lấy danh sách `product`
+
+Tạo phương thức `GetAll` tại `IPublicProductService`
+
+```csharp
+namespace eShopSolution.Application.Catalog.Products
+{
+    public interface IPublicProductService
+    {
+        Task<PagedResult<ProductViewModel>> GetAllByCategoryId(GetPublicProductPagingRequest request);
+        Task<List<ProductViewModel>> GetAll();
+    }
+}
+```
+
+Cập nhật `ProductController` để nhận vào `IPublicProductService`, thông qua `service`
+này, ta có thể gọi phương thức `GetAll()` để lấy danh sách `products`
+
+```csharp
+namespace eShopSolution.BackendApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductController : ControllerBase
+    {
+        private readonly IPublicProductService _publicProductService;
+        public ProductController(IPublicProductService publicProductService)
+        {
+            _publicProductService = publicProductService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            var products = await _publicProductService.GetAll();
+            return  Ok(products);
+        }
+    }
+}
+```
+
+Để `inject` đối tượng thực thi `IPublicProductService` vào `ProductController`, ta
+cần phải khai báo `Dependency Injection` tại phương thức `ConfigureService` tại
+file `Startup.cs`
+
+Có 1 số phương thức để `inject` đối tượng vào `controller`, tại đây, ta dùng
+phương thức `AddTransient`, tức là mỗi lần server nhận `request`. Hệ thống sẽ
+tự động tạo 1 `object` mới thuộc `class` `PublicProductService` và tự động
+`inject` `object` này vào những `Controller` yêu cầu truyền `IPublicProductService`
+
+```csharp
+// This method gets called by the runtime. Use this method to add services to the container.
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddDbContext<EShopDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString(SystemConstants.MainConnectionString)));
+
+    // Declare Dependency Injections
+    services.AddTransient<IPublicProductService, PublicProductService>();
+
+    services.AddControllersWithViews();
+}
+```
