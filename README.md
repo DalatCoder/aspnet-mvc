@@ -1154,3 +1154,155 @@ namespace eShopSolution.Data.EF
 - Chọn `project` `eShopSolution.Data`
 - Chạy lệnh `Add-Migration AddProductImageTable`
 - Chạy lệnh `Update-Database`
+
+### 5.5. Tách lớp `dto`
+
+Bởi vì tầng `application` và tầng `web mvc` đều sử dụng chung `dto`, do đó
+cách tốt nhất là tách `dto` ra 1 `project` riêng.
+
+- Tạo `project` mới
+- Đặt tên `eShopSolution.ViewModels`
+
+Di chuyển các `dto` cần thiết vào `project` `ViewModels`
+
+Sau khi chuyển xong, tiến hành cập nhật lại `namespace` và thêm `project reference` tại
+`project` `Application`
+
+![Image](md_assets/viewmodels.png)
+
+### 5.6. Tạo các phương thức quản lý ảnh
+
+Có thể làm theo 2 dạng:
+
+- Tạo `product` trước, sau đó cập nhật `product_image` sau
+- Đưa `product_image` vào `product_request` và tạo đồng thời
+
+Cần thêm 1 trường `IFormFile` vào `dto` `ProductCreateRequest` để tiếp nhận
+ảnh gửi lên từ `client`.
+
+```csharp
+namespace eShopSolution.ViewModels.Catalog.Products.Manage
+{
+    public class ProductCreateRequest
+    {
+        public decimal Price { get; set; }
+        public decimal OriginalPrice { set; get; }
+        public int Stock { set; get; }
+
+        public string Name { set; get; }
+        public string Description { set; get; }
+        public string Details { set; get; }
+        public string SeoDescription { set; get; }
+        public string SeoTitle { set; get; }
+
+        public string SeoAlias { get; set; }
+        public string LanguageId { set; get; }
+
+        public IFormFile ThumbnailImage { get; set; }
+    }
+}
+```
+
+Đồng thời thêm vào `dto` `ProductUpdateRequest`
+
+```csharp
+namespace eShopSolution.ViewModels.Catalog.Products.Manage
+{
+    public class ProductUpdateRequest
+    {
+        public int Id { get; set; }
+
+        public string Name { set; get; }
+        public string Description { set; get; }
+        public string Details { set; get; }
+        public string SeoDescription { set; get; }
+        public string SeoTitle { set; get; }
+
+        public string SeoAlias { get; set; }
+        public string LanguageId { set; get; }
+
+        public IFormFile ThumbnailImage { get; set; }
+    }
+}
+```
+
+#### 5.6.1. Lưu trữ hình ảnh
+
+Tạo `interface` và `class` chịu trách nhiệm cho việc lưu trữ hình ảnh
+
+```csharp
+namespace eShopSolution.Application.Common
+{
+    public class FileStorageService : IStorageService
+    {
+        private readonly string _userContentFolder;
+        private const string USER_CONTENT_FOLDER_NAME = "user-content";
+
+        public FileStorageService(IWebHostEnvironment webHostEnvironment)
+        {
+            _userContentFolder = Path.Combine(webHostEnvironment.WebRootPath, USER_CONTENT_FOLDER_NAME);
+        }
+
+        public async Task DeleteFileAsync(string fileName)
+        {
+            var filePath = Path.Combine(_userContentFolder, fileName);
+            if (File.Exists(filePath))
+            {
+                await Task.Run(() => File.Delete(filePath));
+            }
+        }
+
+        public string GetFileUrl(string fileName)
+        {
+            return $"/{USER_CONTENT_FOLDER_NAME}/{fileName}";
+        }
+
+        public async Task SaveFileAsync(Stream mediaBinaryStream, string fileName)
+        {
+            var filePath = Path.Combine(_userContentFolder, fileName);
+
+            using var output = new FileStream(filePath, FileMode.Create);
+            await mediaBinaryStream.CopyToAsync(output);
+        }
+    }
+}
+```
+
+Về phần `interface` `IWebHostEnvironment`, ta cần phải chỉnh sửa lại `file` `project` `Application`
+và thêm dòng `FrameworkReference`
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\eShopSolution.Data\eShopSolution.Data.csproj" />
+    <ProjectReference Include="..\eShopSolution.Utilities\eShopSolution.Utilities.csproj" />
+    <ProjectReference Include="..\eShopSolution.ViewModels\eShopSolution.ViewModels.csproj" />
+  </ItemGroup>
+
+</Project>
+```
+
+## 6. Lưu ý về tầng `Application` và `MVC`
+
+Dự án này được phân chia theo kiến trúc `N-layer`, trong đó có các tầng như:
+`Data`, `Application`, `WebApp`
+
+`project` `WebApp` lại tiếp tục được phân chia theo kiến trúc `MVC`
+
+Do đó, phần `Controller` sẽ gần giống như là tầng `Application` vậy, có thể đưa
+`code` từ tầng `Application` vào đây. Tuy nhiên, tác giả muốn tách riêng `logic`
+ra tầng `Application` để dễ quản lý.
+
+Mặt khác, các `dto` được dùng chung ở cả tầng `Application` và tầng `WebApp MVC`.
+Do đó, tác giả đã tách các `dto` này ra 1 `project` riêng và đặt tên `ViewModels`.
+
+Ở tầng `Application` chỉ chứa các `Service`
